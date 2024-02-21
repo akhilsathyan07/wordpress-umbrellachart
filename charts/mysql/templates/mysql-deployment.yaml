@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.mysql.name }}
+  labels:
+    app: {{ .Values.mysql.labels.app }}
+spec:
+  ports:
+    - port: {{ .Values.mysql.service.port }}
+  selector:
+    app: {{ .Values.mysql.labels.app }}
+    tier: {{ .Values.mysql.labels.tier }}
+  clusterIP: {{ .Values.mysql.service.clusterIP }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.mysql.volume.claimName }}
+  labels:
+    app: {{ .Values.mysql.labels.app }}
+spec:
+  accessModes: {{ .Values.mysql.volume.accessModes }}
+  resources:
+    requests:
+      storage: {{ .Values.mysql.volume.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.mysql.name }}
+  labels:
+    app: {{ .Values.mysql.labels.app }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.mysql.labels.app }}
+      tier: {{ .Values.mysql.labels.tier }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.mysql.labels.app }}
+        tier: {{ .Values.mysql.labels.tier }}
+    spec:
+      containers:
+      - image: {{ .Values.mysql.image }}
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.mysql.env.rootPasswordSecret.name }}
+              key: {{ .Values.mysql.env.rootPasswordSecret.key }}
+        - name: MYSQL_DATABASE
+          value: {{ .Values.mysql.env.database }}
+        - name: MYSQL_USER
+          value: {{ .Values.mysql.env.user }}
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.mysql.env.passwordSecret.name }}
+              key: {{ .Values.mysql.env.passwordSecret.key }}
+        ports:
+        - containerPort: {{ .Values.mysql.service.port }}
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.mysql.volume.claimName }}
+

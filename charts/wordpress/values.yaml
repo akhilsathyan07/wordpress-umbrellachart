@@ -1,0 +1,20 @@
+wordpress:
+  image: wordpress:6.2.1-apache
+  name: wordpress
+  labels:
+    app: wordpress
+    tier: frontend
+  service:
+    type: LoadBalancer
+    port: 80
+  env:
+    dbHost: wordpress-mysql
+    dbPasswordSecret:
+      name: mysql-pass
+      key: password
+    dbUser: wordpress
+  volume:
+    claimName: wp-pv-claim
+    accessModes:
+      - ReadWriteOnce
+    storage: 20Gi

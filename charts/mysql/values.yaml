@@ -1,0 +1,23 @@
+mysql:
+  image: mysql:8.0
+  name: wordpress-mysql
+  labels:
+    app: wordpress
+    tier: mysql
+  service:
+    port: 3306
+    clusterIP: None
+  env:
+    rootPasswordSecret:
+      name: mysql-pass
+      key: password
+    database: wordpress
+    user: wordpress
+    passwordSecret:
+      name: mysql-pass
+      key: password
+  volume:
+    claimName: mysql-pv-claim
+    accessModes:
+      - ReadWriteOnce
+    storage: 20Gi
